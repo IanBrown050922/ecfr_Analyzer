@@ -1,5 +1,11 @@
 import streamlit as st
+import scripts.fetch_ecfr as fetch
 from ecfr.stats import *
+
+@st.cache_resource(ttl=7*24*60*60) # fetch at least once every 7 days
+def build_db():
+    fetch.run()
+    return "data/ecfr.db"
 
 st.set_page_config(page_title='eCFR Explorer', layout='wide')
 st.title('eCFR Statistical Explorer')

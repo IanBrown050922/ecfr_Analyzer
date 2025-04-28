@@ -86,7 +86,7 @@ def fill_rows(rows):
         initial_ctx = {'chapter':None, 'subchapter':None, 'part':None, 'subpart':None}
         walk_xml_tree(rows, root, initial_ctx, current_title)
 
-if __name__ == '__main__':
+def run():
     # get data as XML
     get_all_xmls()
 
