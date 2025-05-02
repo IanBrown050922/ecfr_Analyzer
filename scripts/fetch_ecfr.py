@@ -45,35 +45,44 @@ def get_all_xmls():
             print('Title', title, 'failed:', e)
 
 # Walk a title's XML tree to build rows of the database table
-def walk_xml_tree(rows, elem, ctx, current_title):
+def walk_xml_tree(rows, elem, ctx, current_title, ancestry_id):
     t = elem.get('TYPE') # e.g. 'CHAPTER', 'SECTION', etc.
     n = elem.get('N') # the identifier (digit, Roman numeral, letter)
+    if ancestry_id is None:
+        full_id = n
+    else:
+        full_id = f'{ancestry_id}, {t} {n}' # full id with sequence of ancestral ids
+
     # update context based on TYPE
     if t == 'CHAPTER':
-        ctx['chapter'] = n
+        ctx['chapter'] = full_id
     elif t == 'SUBCHAP':
-        ctx['subchapter'] = n
+        ctx['subchapter'] = full_id
     elif t == 'PART':
-        ctx['part'] = n
+        ctx['part'] = full_id
     elif t == 'SUBPART':
-        ctx['subpart'] = n
+        ctx['subpart'] = full_id
     elif t == 'SECTION':
         # when we hit a section div, build a row of the table
-        paragraphs = ' '.join(p.text or '' for p in elem.findall('.//P'))
+        # paragraphs = ' '.join(p.text or '' for p in elem.findall('.//P'))
+        paragraphs = ' '.join(
+            ''.join(p.itertext()) 
+            for p in elem.findall('.//P')
+        )
         rows.append((
             current_title,
             ctx.get('chapter'),
             ctx.get('subchapter'),
             ctx.get('part'),
             ctx.get('subpart'),
-            n, # section number
+            full_id, # section number
             paragraphs,
             len(paragraphs.split())
         ))
     # recurse into child DIVs
     for child in elem:
         if child.tag.startswith('DIV'):
-            walk_xml_tree(rows, child, dict(ctx), current_title)
+            walk_xml_tree(rows, child, dict(ctx), current_title, full_id)
 
 def fill_rows(rows):
     for xml_file in os.listdir(XML_DIR):
@@ -84,7 +93,7 @@ def fill_rows(rows):
         root = tree.getroot()
         # start context with no chapter/etc. - we only need to store ancestor types of section
         initial_ctx = {'chapter':None, 'subchapter':None, 'part':None, 'subpart':None}
-        walk_xml_tree(rows, root, initial_ctx, current_title)
+        walk_xml_tree(rows, root, initial_ctx, current_title, None)
 
 def run():
     # get data as XML
@@ -118,3 +127,7 @@ def run():
     connection.commit()
     connection.close()
     print(f'SQLite database built: {DB_PATH} ({len(rows)} sections inserted)')
+
+# in case we need to run this script directly
+if __name__ == '__main__':
+    run()
