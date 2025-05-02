@@ -96,6 +96,9 @@ def fill_rows(rows):
         walk_xml_tree(rows, root, initial_ctx, current_title, None)
 
 def run():
+    # ensure ./data and ./data/ecfr_xml exist
+    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+    os.makedirs(XML_DIR, exist_ok=True)
     # get data as XML
     get_all_xmls()
 
