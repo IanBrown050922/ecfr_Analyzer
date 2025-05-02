@@ -9,7 +9,8 @@ st.title('eCFR Statistical Explorer')
 @st.cache_resource(ttl=7*24*60*60) # fetch at least once every 7 days
 def build_db():
     fetch.run()
-    return 'data/ecfr.db'
+# rebuild database on a regular basis:
+build_db()
 
 METRICS = ['Average words per group',
            'Keyword count per group',
